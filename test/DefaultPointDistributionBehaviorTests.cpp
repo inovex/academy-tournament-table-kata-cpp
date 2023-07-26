@@ -5,38 +5,72 @@ class DefaultPointDistributionBehaviorTests : public ::testing::Test
 {
 protected:
   std::shared_ptr<IPointDistributionBehavior> pointDistributionBehavior;
-  std::shared_ptr<ITeam> changeFirstTeamName;
-  std::shared_ptr<ITeam> changeSecondTeamName;
-  std::shared_ptr<ITableEntry> firstTeamTableEntry;
-  std::shared_ptr<ITableEntry> secondTableEntry;
+  std::shared_ptr<ITeam> germany;
+  std::shared_ptr<ITeam> england;
+  std::shared_ptr<ITableEntry> germanyTableEntry;
+  std::shared_ptr<ITableEntry> englandTableEntry;
+  const int zeroPoints = 0;
+  const int winningPoints = 3;
+  const int drawPoints = 1;
 
   virtual void SetUp()
   {
     pointDistributionBehavior =
         std::make_shared<DefaultPointDistributionBehavior>();
 
-    changeFirstTeamName = std::make_shared<Team>("first");
-    changeSecondTeamName = std::make_shared<Team>("second");
+    germany = std::make_shared<Team>("Germany");
+    england = std::make_shared<Team>("England");
 
-    firstTeamTableEntry = std::make_shared<TableEntry>();
-    firstTeamTableEntry->setTeam(changeFirstTeamName);
+    germanyTableEntry = std::make_shared<TableEntry>();
+    germanyTableEntry->setTeam(germany);
 
-    secondTableEntry = std::make_shared<TableEntry>();
-    secondTableEntry->setTeam(changeSecondTeamName);
+    englandTableEntry = std::make_shared<TableEntry>();
+    englandTableEntry->setTeam(england);
   }
   virtual void TearDown()
   {
     pointDistributionBehavior.reset();
 
-    firstTeamTableEntry.reset();
-    secondTableEntry.reset();
+    germanyTableEntry.reset();
+    englandTableEntry.reset();
 
-    changeFirstTeamName.reset();
-    changeSecondTeamName.reset();
+    germany.reset();
+    england.reset();
   }
 };
 
-TEST_F(DefaultPointDistributionBehaviorTests, whatShouldITest)
+TEST_F(DefaultPointDistributionBehaviorTests,
+       addPointsToTableEntries_HomeTeamWon_HomeTeamGetPoints)
 {
-  // TODO
+  GameResult gameResult(germany, england, 1, 0);
+
+  pointDistributionBehavior->addPointsToTableEntries(
+      germanyTableEntry, englandTableEntry, gameResult);
+
+  ASSERT_EQ(winningPoints, germanyTableEntry->getPoints());
+  ASSERT_EQ(zeroPoints, englandTableEntry->getPoints());
+}
+
+TEST_F(DefaultPointDistributionBehaviorTests,
+       addPointsToTableEntries_AwayTeamWon_AwayTeamGetPoints)
+{
+  GameResult gameResult(germany, england, 0, 1);
+
+  pointDistributionBehavior->addPointsToTableEntries(
+      germanyTableEntry, englandTableEntry, gameResult);
+
+  ASSERT_EQ(zeroPoints, germanyTableEntry->getPoints());
+  ASSERT_EQ(winningPoints, englandTableEntry->getPoints());
+}
+
+TEST_F(DefaultPointDistributionBehaviorTests,
+       addPointsToTableEntries_Draw_BothTeamsGetPoints)
+{
+  GameResult gameResult(germany, england, 0, 0);
+
+  pointDistributionBehavior->addPointsToTableEntries(
+      germanyTableEntry, englandTableEntry, gameResult);
+
+  ASSERT_EQ(drawPoints, germanyTableEntry->getPoints());
+  ASSERT_EQ(drawPoints, englandTableEntry->getPoints());
 }
