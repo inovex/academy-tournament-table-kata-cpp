@@ -1,40 +1,58 @@
 #include "DefaultTableEntryComparer.h"
 #include "gtest/gtest.h"
 
+class CoefficientClientMock : public ICoefficientClient
+{
+public:
+  std::map<std::shared_ptr<ITeam>, int> returnValue;
+  mutable bool wasCalled = false;
+
+  int getCoefficient(std::shared_ptr<ITeam> team) const
+  {
+    wasCalled = true;
+    return returnValue.find(team)->second;
+  }
+};
+
 class DefaultTableEntryComparerTests : public ::testing::Test
 {
 protected:
   std::shared_ptr<ITableEntryComparer> tableEntryComparer;
+  std::shared_ptr<ITeam> germany;
+  std::shared_ptr<ITeam> england;
   std::shared_ptr<ITableEntry> germanyTableEntry;
   std::shared_ptr<ITableEntry> englandTableEntry;
+  std::shared_ptr<CoefficientClientMock> coefficientClientMock;
 
   virtual void SetUp()
   {
-    tableEntryComparer = std::make_shared<DefaultTableEntryComparer>();
+    coefficientClientMock = std::make_shared<CoefficientClientMock>();
+
+    tableEntryComparer =
+        std::make_shared<DefaultTableEntryComparer>(coefficientClientMock);
+
+    germany = std::make_shared<Team>("Germany");
+    england = std::make_shared<Team>("England");
 
     germanyTableEntry = std::make_shared<TableEntry>();
+    germanyTableEntry->setTeam(germany);
+
     englandTableEntry = std::make_shared<TableEntry>();
+    englandTableEntry->setTeam(england);
   }
   virtual void TearDown()
   {
     tableEntryComparer.reset();
 
+    germany.reset();
+    england.reset();
+
     germanyTableEntry.reset();
     englandTableEntry.reset();
+
+    coefficientClientMock.reset();
   }
 };
-
-TEST_F(DefaultTableEntryComparerTests,
-       greaterThan_BothTeamsHaveSamePoints_RetrunsFalse)
-{
-  germanyTableEntry->addPoints(1);
-  englandTableEntry->addPoints(1);
-
-  bool result =
-      tableEntryComparer->greaterThan(*germanyTableEntry, *englandTableEntry);
-
-  ASSERT_FALSE(result);
-}
 
 TEST_F(DefaultTableEntryComparerTests,
        greaterThan_FirstTeamHasMorePoints_RetrunsFalse)
@@ -59,6 +77,7 @@ TEST_F(DefaultTableEntryComparerTests,
 
   ASSERT_FALSE(result);
 }
+
 TEST_F(
     DefaultTableEntryComparerTests,
     greaterThan_BothTeamsHaveSamePointsAndFirstTeamLessGoalDifference_RetrunsFalse)
@@ -91,8 +110,12 @@ TEST_F(
 
 TEST_F(
     DefaultTableEntryComparerTests,
-    greaterThan_BothTeamsHaveSamePointsAndSameGoalDifferenceAndSameScoredGoals_RetrunsFalse)
+    greaterThan_BothTeamsHaveSamePointsAndSameGoalDifferenceAndSameCoefficient_RetrunsFalse)
 {
+  coefficientClientMock->returnValue.insert(
+      std::pair<std::shared_ptr<ITeam>, int>(germany, 1));
+  coefficientClientMock->returnValue.insert(
+      std::pair<std::shared_ptr<ITeam>, int>(england, 1));
   germanyTableEntry->addPoints(1);
   englandTableEntry->addPoints(1);
   germanyTableEntry->addGoalsScored(1);
@@ -106,8 +129,12 @@ TEST_F(
 
 TEST_F(
     DefaultTableEntryComparerTests,
-    greaterThan_BothTeamsHaveSamePointsAndSameGoalDifferenceAndFirstTeamLessScoredGoals_RetrunsFalse)
+    greaterThan_BothTeamsHaveSamePointsAndSameGoalDifferenceAndFirstTeamLessCoefficient_RetrunsFalse)
 {
+  coefficientClientMock->returnValue.insert(
+      std::pair<std::shared_ptr<ITeam>, int>(germany, 1));
+  coefficientClientMock->returnValue.insert(
+      std::pair<std::shared_ptr<ITeam>, int>(england, 2));
   germanyTableEntry->addPoints(1);
   englandTableEntry->addPoints(1);
   germanyTableEntry->addGoalsScored(1);
@@ -123,8 +150,12 @@ TEST_F(
 
 TEST_F(
     DefaultTableEntryComparerTests,
-    greaterThan_BothTeamsHaveSamePointsAndSameGoalDifferenceAndFirstTeamGreaterScoredGoals_RetrunsFalse)
+    greaterThan_BothTeamsHaveSamePointsAndSameGoalDifferenceAndFirstTeamGreaterCoefficient_RetrunsFalse)
 {
+  coefficientClientMock->returnValue.insert(
+      std::pair<std::shared_ptr<ITeam>, int>(germany, 2));
+  coefficientClientMock->returnValue.insert(
+      std::pair<std::shared_ptr<ITeam>, int>(england, 1));
   germanyTableEntry->addPoints(1);
   englandTableEntry->addPoints(1);
   germanyTableEntry->addGoalsScored(2);
@@ -136,4 +167,16 @@ TEST_F(
       tableEntryComparer->greaterThan(*germanyTableEntry, *englandTableEntry);
 
   ASSERT_TRUE(result);
+}
+
+TEST_F(DefaultTableEntryComparerTests,
+       greaterThan_FirstTeamHasMorePoints_CoefficientClientIsNotCalled)
+{
+  germanyTableEntry->addPoints(2);
+  englandTableEntry->addPoints(1);
+
+  bool result =
+      tableEntryComparer->greaterThan(*germanyTableEntry, *englandTableEntry);
+
+  ASSERT_FALSE(coefficientClientMock->wasCalled);
 }

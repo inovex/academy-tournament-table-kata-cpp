@@ -11,7 +11,8 @@ bool DefaultTableEntryComparer::greaterThan(
 
     if (leftGoalDifference == rightGoalDifference)
     {
-      return leftTableEntry.getGoalsScored() > rightTableEntry.getGoalsScored();
+      return coefficientClient->getCoefficient(leftTableEntry.getTeam()) >
+             coefficientClient->getCoefficient(rightTableEntry.getTeam());
     }
 
     return leftGoalDifference > rightGoalDifference;
