@@ -19,4 +19,8 @@ public:
       const std::shared_ptr<ITableEntry> &homeTeamTableEntry,
       const std::shared_ptr<ITableEntry> &awayTeamTableEntry,
       const GameResult &gameResult);
+
+private:
+  const int PointsInCaseOfDraw = 1;
+  const int PointsInCaseOfWin = 3;
 };

@@ -5,6 +5,23 @@ void DefaultPointDistributionBehavior::addPointsToTableEntries(
     const std::shared_ptr<ITableEntry> &awayTeamTableEntry,
     const GameResult &gameResult)
 {
-  // TODO: this method should add points to the table entries depending on the
-  // game result
+  std::shared_ptr<ITeam> winningTeam = gameResult.getWinningTeam();
+
+  if (winningTeam == NULL)
+  {
+    homeTeamTableEntry->addPoints(PointsInCaseOfDraw);
+    awayTeamTableEntry->addPoints(PointsInCaseOfDraw);
+
+    return;
+  }
+
+  if (winningTeam == homeTeamTableEntry->getTeam())
+  {
+    homeTeamTableEntry->addPoints(PointsInCaseOfWin);
+  }
+
+  if (winningTeam == awayTeamTableEntry->getTeam())
+  {
+    awayTeamTableEntry->addPoints(PointsInCaseOfWin);
+  }
 }
