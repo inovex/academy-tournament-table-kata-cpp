@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/devcontainers/cpp:ubuntu-22.04
 
-ARG REINSTALL_CMAKE_VERSION_FROM_SOURCE="3.27.1"
+ARG REINSTALL_CMAKE_VERSION_FROM_SOURCE="3.28.3"
 
 COPY ./reinstall-cmake.sh /tmp/
 
